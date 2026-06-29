@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Speak Like a Native</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── SCREENS ── */
+    .screen { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 480px; padding: 24px; }
+    .screen.active { display: flex; }
+
+    /* ── CONFIG SCREEN ── */
+    #screen-config h1 { font-size: 1.6rem; margin-bottom: 6px; }
+    #screen-config p  { color: #94a3b8; font-size: 0.9rem; margin-bottom: 20px; text-align: center; }
+    #screen-config input {
+      width: 100%; padding: 10px 14px; border-radius: 8px;
+      border: 1px solid #334155; background: #1e293b; color: #e2e8f0;
+      font-size: 0.95rem; margin-bottom: 10px;
+    }
+    #screen-config input::placeholder { color: #64748b; }
+    #btn-save-key {
+      width: 100%; padding: 11px; border-radius: 8px; border: none;
+      background: #6366f1; color: white; font-size: 1rem; cursor: pointer;
+    }
+    #btn-save-key:hover { background: #4f46e5; }
+
+    /* ── PROFILE SCREEN ── */
+    #screen-profiles h2 { font-size: 1.4rem; margin-bottom: 6px; }
+    #screen-profiles p  { color: #94a3b8; font-size: 0.85rem; margin-bottom: 20px; text-align: center; }
+
+    .profile-list { width: 100%; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+    .profile-btn {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 16px; border-radius: 10px; border: 1px solid #334155;
+      background: #1e293b; cursor: pointer; transition: border-color 0.2s;
+    }
+    .profile-btn:hover { border-color: #6366f1; }
+    .profile-info { display: flex; flex-direction: column; align-items: flex-start; }
+    .profile-name { font-size: 1rem; font-weight: 600; }
+    .profile-stats { font-size: 0.75rem; color: #64748b; margin-top: 2px; }
+    .profile-level {
+      font-size: 0.75rem; background: #1d4ed8; color: #bfdbfe;
+      padding: 3px 8px; border-radius: 20px;
+    }
+
+    .add-profile { width: 100%; display: flex; gap: 8px; }
+    .add-profile input {
+      flex: 1; padding: 10px 12px; border-radius: 8px;
+      border: 1px solid #334155; background: #1e293b; color: #e2e8f0;
+      font-size: 0.9rem;
+    }
+    .add-profile button {
+      padding: 10px 16px; border-radius: 8px; border: none;
+      background: #6366f1; color: white; cursor: pointer; font-size: 1rem;
+    }
+
+    /* ── CHAT SCREEN ── */
+    #screen-chat { justify-content: space-between; height: 100vh; max-width: 540px; padding: 0; }
+
+    .chat-header {
+      width: 100%; padding: 14px 20px;
+      background: #1e293b; border-bottom: 1px solid #334155;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .chat-header-left { display: flex; flex-direction: column; }
+    .chat-header h3 { font-size: 1rem; }
+    .chat-header span { font-size: 0.75rem; color: #94a3b8; }
+    .btn-back {
+      background: none; border: 1px solid #334155; color: #94a3b8;
+      padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem;
+    }
+    .btn-back:hover { border-color: #6366f1; color: #e2e8f0; }
+
+    #messages {
+      flex: 1; width: 100%; overflow-y: auto;
+      padding: 16px 20px; display: flex; flex-direction: column; gap: 12px;
+    }
+
+    .msg {
+      max-width: 82%; padding: 10px 14px; border-radius: 14px;
+      font-size: 0.92rem; line-height: 1.5;
+    }
+    .msg.bot  { background: #1e293b; align-self: flex-start; border-bottom-left-radius: 4px; }
+    .msg.user { background: #4f46e5; align-self: flex-end; border-bottom-right-radius: 4px; }
+    .msg.correction {
+      background: #0f3460; border-left: 3px solid #38bdf8;
+      align-self: flex-start; font-size: 0.82rem; max-width: 92%; color: #bae6fd;
+    }
+    .msg.system { background: #1a2a1a; border-left: 3px solid #4ade80; align-self: center; font-size: 0.8rem; color: #86efac; max-width: 92%; text-align: center; }
+
+    .chat-bottom { width: 100%; padding: 16px 20px; background: #0f172a; border-top: 1px solid #1e293b; }
+
+    .topic-bar {
+      font-size: 0.78rem; color: #64748b; margin-bottom: 10px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .topic-bar span { background: #1e293b; padding: 2px 8px; border-radius: 10px; color: #94a3b8; }
+
+    .controls { display: flex; align-items: center; justify-content: center; gap: 16px; }
+
+    #btn-mic {
+      width: 70px; height: 70px; border-radius: 50%; border: none;
+      background: #6366f1; color: white; font-size: 1.8rem;
+      cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 20px #6366f155;
+    }
+    #btn-mic:hover { background: #4f46e5; }
+    #btn-mic.listening { background: #ef4444; animation: pulse 1s infinite; box-shadow: 0 4px 24px #ef444466; }
+    #btn-mic:disabled { background: #334155; cursor: not-allowed; box-shadow: none; }
+
+    @keyframes pulse {
+      0%,100% { transform: scale(1); }
+      50%      { transform: scale(1.08); }
+    }
+
+    .btn-small {
+      width: 44px; height: 44px; border-radius: 50%; border: 1px solid #334155;
+      background: #1e293b; color: #94a3b8; font-size: 1.1rem; cursor: pointer;
+    }
+    .btn-small:hover { border-color: #6366f1; color: #e2e8f0; }
+
+    #status-text { font-size: 0.78rem; color: #64748b; text-align: center; margin-top: 8px; }
+
+    /* ── STATS PANEL ── */
+    .stats-row {
+      display: flex; gap: 10px; margin-bottom: 12px; width: 100%;
+    }
+    .stat-card {
+      flex: 1; background: #1e293b; border-radius: 10px;
+      padding: 10px; text-align: center;
+    }
+    .stat-card .val { font-size: 1.3rem; font-weight: 700; color: #6366f1; }
+    .stat-card .lbl { font-size: 0.7rem; color: #64748b; margin-top: 2px; }
+
+    scrollbar-width: thin;
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+  </style>
+</head>
+<body>
+
+<!-- ── SCREEN 1: API KEY CONFIG ── -->
+<div id="screen-config" class="screen active">
+  <h1>🎙️ Speak Like a Native</h1>
+  <p>Learn North American English through daily conversations.<br/>First, enter your Groq API key (free at console.groq.com).</p>
+  <input type="password" id="input-key" placeholder="gsk_..." />
+  <button id="btn-save-key">Save & Continue →</button>
+</div>
+
+<!-- ── SCREEN 2: PROFILE SELECT ── -->
+<div id="screen-profiles" class="screen">
+  <h2>Who's practicing today?</h2>
+  <p>Up to 5 profiles. Each person keeps their own progress.</p>
+  <div class="profile-list" id="profile-list"></div>
+  <div class="add-profile">
+    <input type="text" id="input-new-name" placeholder="Your name..." maxlength="20" />
+    <button id="btn-add-profile">＋</button>
+  </div>
+</div>
+
+<!-- ── SCREEN 3: CHAT ── -->
+<div id="screen-chat" class="screen">
+  <div class="chat-header">
+    <div class="chat-header-left">
+      <h3 id="chat-username">—</h3>
+      <span id="chat-subtitle">Level 1 · Day 1</span>
+    </div>
+    <button class="btn-back" id="btn-back">← Profiles</button>
+  </div>
+
+  <div id="messages"></div>
+
+  <div class="chat-bottom">
+    <div class="topic-bar">Today's topic: <span id="topic-label">—</span></div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="val" id="stat-days">0</div><div class="lbl">day streak</div></div>
+      <div class="stat-card"><div class="val" id="stat-words">0</div><div class="lbl">words learned</div></div>
+      <div class="stat-card"><div class="val" id="stat-sessions">0</div><div class="lbl">sessions</div></div>
+    </div>
+    <div class="controls">
+      <button class="btn-small" id="btn-repeat" title="Repeat last">🔁</button>
+      <button id="btn-mic" title="Hold to speak">🎙️</button>
+      <button class="btn-small" id="btn-hint" title="Ask for a hint">💡</button>
+    </div>
+    <div id="status-text">Tap the mic to speak</div>
+  </div>
+</div>
+
+<script>
+// ──────────────────────────────────────────────
+//  STORAGE HELPERS
+// ──────────────────────────────────────────────
+const LS = {
+  get: k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
+  set: (k, v) => localStorage.setItem(k, JSON.stringify(v)),
+};
+
+const KEY_APIKEY   = 'sln_apikey';
+const KEY_PROFILES = 'sln_profiles';
+
+function getProfiles() { return LS.get(KEY_PROFILES) || {}; }
+function saveProfiles(p) { LS.set(KEY_PROFILES, p); }
+
+function getProfile(name) {
+  const all = getProfiles();
+  if (!all[name]) {
+    all[name] = { name, level: 1, sessions: 0, wordsLearned: 0, streak: 0, lastDate: null, topicIndex: 0, history: [] };
+    saveProfiles(all);
+  }
+  return all[name];
+}
+
+function saveProfile(p) {
+  const all = getProfiles();
+  all[p.name] = p;
+  saveProfiles(all);
+}
+
+// ──────────────────────────────────────────────
+//  TOPICS (30 daily lessons)
+// ──────────────────────────────────────────────
+const TOPICS = [
+  "Greetings & small talk",
+  "Introducing yourself",
+  "Numbers & counting",
+  "Days, months & time",
+  "Asking for directions",
+  "At a coffee shop",
+  "Ordering food at a restaurant",
+  "Shopping & prices",
+  "Talking about family",
+  "Describing your home",
+  "Daily routines & habits",
+  "Talking about hobbies",
+  "Weather & seasons",
+  "Talking about work",
+  "Making plans with friends",
+  "Using public transport",
+  "At the doctor's office",
+  "Talking about movies & TV",
+  "Sports & fitness",
+  "Expressing opinions",
+  "Agreeing & disagreeing politely",
+  "Texting & phone calls",
+  "American slang & expressions",
+  "Talking about travel",
+  "Job interviews",
+  "Giving compliments",
+  "Apologizing & forgiving",
+  "American holidays & culture",
+  "Talking about news & current events",
+  "Free conversation — your choice!",
+];
+
+// ──────────────────────────────────────────────
+//  SCREEN LOGIC
+// ──────────────────────────────────────────────
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// Config screen
+const inputKey  = document.getElementById('input-key');
+const btnSaveKey = document.getElementById('btn-save-key');
+
+(function init() {
+  const saved = localStorage.getItem(KEY_APIKEY);
+  if (saved) { show('screen-profiles'); renderProfiles(); }
+})();
+
+btnSaveKey.addEventListener('click', () => {
+  const k = inputKey.value.trim();
+  if (!k.startsWith('gsk_')) { alert('Please enter a valid Groq key (starts with gsk_)'); return; }
+  localStorage.setItem(KEY_APIKEY, k);
+  show('screen-profiles');
+  renderProfiles();
+});
+
+// Profile screen
+function renderProfiles() {
+  const list = document.getElementById('profile-list');
+  list.innerHTML = '';
+  const profiles = getProfiles();
+  Object.values(profiles).forEach(p => {
+    const btn = document.createElement('div');
+    btn.className = 'profile-btn';
+    btn.innerHTML = `
+      <div class="profile-info">
+        <span class="profile-name">${p.name}</span>
+        <span class="profile-stats">Sessions: ${p.sessions} · Words: ${p.wordsLearned}</span>
+      </div>
+      <span class="profile-level">Level ${p.level}</span>`;
+    btn.addEventListener('click', () => startChat(p.name));
+    list.appendChild(btn);
+  });
+}
+
+document.getElementById('btn-add-profile').addEventListener('click', addProfile);
+document.getElementById('input-new-name').addEventListener('keydown', e => { if (e.key === 'Enter') addProfile(); });
+
+function addProfile() {
+  const inp = document.getElementById('input-new-name');
+  const name = inp.value.trim();
+  if (!name) return;
+  const all = getProfiles();
+  if (Object.keys(all).length >= 5) { alert('Maximum 5 profiles.'); return; }
+  if (all[name]) { alert('Name already exists.'); return; }
+  getProfile(name); // creates it
+  inp.value = '';
+  renderProfiles();
+}
+
+document.getElementById('btn-back').addEventListener('click', () => {
+  stopSpeech();
+  show('screen-profiles');
+  renderProfiles();
+});
+
+// ──────────────────────────────────────────────
+//  CHAT
+// ──────────────────────────────────────────────
+let currentProfile = null;
+let conversationHistory = [];
+let lastBotText = '';
+
+function startChat(name) {
+  currentProfile = getProfile(name);
+
+  // Update streak
+  const today = new Date().toDateString();
+  if (currentProfile.lastDate !== today) {
+    const yesterday = new Date(Date.now() - 86400000).toDateString();
+    currentProfile.streak = (currentProfile.lastDate === yesterday) ? currentProfile.streak + 1 : 1;
+    currentProfile.lastDate = today;
+    currentProfile.sessions += 1;
+    saveProfile(currentProfile);
+  }
+
+  // UI
+  document.getElementById('chat-username').textContent = name;
+  const topicIdx = currentProfile.topicIndex % TOPICS.length;
+  document.getElementById('topic-label').textContent = TOPICS[topicIdx];
+  document.getElementById('chat-subtitle').textContent = `Level ${currentProfile.level} · Session ${currentProfile.sessions}`;
+  document.getElementById('stat-days').textContent   = currentProfile.streak;
+  document.getElementById('stat-words').textContent  = currentProfile.wordsLearned;
+  document.getElementById('stat-sessions').textContent = currentProfile.sessions;
+
+  document.getElementById('messages').innerHTML = '';
+  conversationHistory = [];
+
+  show('screen-chat');
+
+  // Opening message from bot
+  const topic = TOPICS[topicIdx];
+  const opening = `Hey ${name}! Great to see you again. Today we're gonna work on: **${topic}**. I'll talk to you just like a regular American would — super natural, no textbook stuff. Ready? Let's kick it off! 🤙`;
+  addMessage('bot', opening);
+  speak(opening);
+  conversationHistory.push({ role: 'assistant', content: opening });
+}
+
+function addMessage(role, text) {
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  div.textContent = text.replace(/\*\*/g, '');
+  document.getElementById('messages').appendChild(div);
+  document.getElementById('messages').scrollTop = 99999;
+  if (role === 'bot') lastBotText = text;
+}
+
+function addCorrection(text) {
+  const div = document.createElement('div');
+  div.className = 'msg correction';
+  div.textContent = text;
+  document.getElementById('messages').appendChild(div);
+  document.getElementById('messages').scrollTop = 99999;
+}
+
+// ──────────────────────────────────────────────
+//  GROQ API
+// ──────────────────────────────────────────────
+function buildSystemPrompt() {
+  const topic = TOPICS[currentProfile.topicIndex % TOPICS.length];
+  return `You are Jake, a friendly 28-year-old from Chicago. You're helping ${currentProfile.name} learn to speak natural North American English. Their current level is ${currentProfile.level}/10 and today's topic is "${topic}".
+
+Rules you ALWAYS follow:
+1. Speak ONLY in English. Keep it natural — use contractions (I'm, gonna, wanna, kinda, y'all, etc.).
+2. Keep responses SHORT: 1-3 sentences max. This is a spoken conversation.
+3. After your natural reply, add a line starting with "📝 TIP:" ONLY if the user made a grammar or vocabulary mistake. Write it like: 📝 TIP: Instead of "X", say "Y" — [brief reason].
+4. Adjust difficulty to level ${currentProfile.level}/10. Level 1 = very simple. Level 10 = native speed, idioms, slang.
+5. Stay on topic: ${topic}. But follow the natural flow of conversation.
+6. Be warm, encouraging, and fun — like a friend, not a teacher.
+7. Occasionally use real American expressions: "That's awesome!", "No way!", "For real?", "Totally!", etc.
+8. Every ~4 exchanges, introduce one new vocabulary word naturally in context.`;
+}
+
+async function sendToGroq(userText) {
+  const apiKey = localStorage.getItem(KEY_APIKEY);
+  conversationHistory.push({ role: 'user', content: userText });
+
+  setStatus('Jake is thinking...');
+
+  try {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model: 'llama-3.1-8b-instant',
+        messages: [
+          { role: 'system', content: buildSystemPrompt() },
+          ...conversationHistory.slice(-12), // keep last 12 turns for context
+        ],
+        max_tokens: 200,
+        temperature: 0.8,
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error?.message || 'API error');
+    }
+
+    const data = await res.json();
+    const reply = data.choices[0].message.content.trim();
+    conversationHistory.push({ role: 'assistant', content: reply });
+
+    // Split correction tip from main reply
+    const tipMatch = reply.match(/📝 TIP:(.*)/s);
+    if (tipMatch) {
+      const mainReply = reply.replace(/📝 TIP:.*$/s, '').trim();
+      addMessage('bot', mainReply);
+      addCorrection('📝 TIP:' + tipMatch[1]);
+      speak(mainReply);
+      // Count word learned
+      currentProfile.wordsLearned += 1;
+    } else {
+      addMessage('bot', reply);
+      speak(reply);
+    }
+
+    // Level up every 8 sessions
+    if (currentProfile.sessions > 0 && currentProfile.sessions % 8 === 0 && currentProfile.level < 10) {
+      currentProfile.level = Math.min(10, currentProfile.level + 1);
+      addMessage('system', `🎉 Level up! You're now Level ${currentProfile.level}. Keep it up!`);
+    }
+
+    document.getElementById('stat-words').textContent = currentProfile.wordsLearned;
+    saveProfile(currentProfile);
+    setStatus('Tap the mic to speak');
+
+  } catch (e) {
+    addMessage('bot', `Oops, something went wrong: ${e.message}`);
+    setStatus('Error — try again');
+  }
+}
+
+// ──────────────────────────────────────────────
+//  SPEECH RECOGNITION
+// ──────────────────────────────────────────────
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition = null;
+const btnMic = document.getElementById('btn-mic');
+
+if (SpeechRecognition) {
+  recognition = new SpeechRecognition();
+  recognition.lang = 'en-US';
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  recognition.onresult = (e) => {
+    const text = e.results[0][0].transcript;
+    addMessage('user', text);
+    sendToGroq(text);
+  };
+
+  recognition.onerror = (e) => {
+    setStatus(`Mic error: ${e.error}. Try again.`);
+    btnMic.classList.remove('listening');
+    btnMic.disabled = false;
+  };
+
+  recognition.onend = () => {
+    btnMic.classList.remove('listening');
+    btnMic.disabled = false;
+  };
+
+  btnMic.addEventListener('click', () => {
+    if (btnMic.classList.contains('listening')) {
+      recognition.stop();
+    } else {
+      stopSpeech();
+      recognition.start();
+      btnMic.classList.add('listening');
+      setStatus('Listening... tap again to stop');
+    }
+  });
+} else {
+  btnMic.disabled = true;
+  setStatus('Speech not supported. Use Chrome or Edge.');
+}
+
+// ──────────────────────────────────────────────
+//  SPEECH SYNTHESIS
+// ──────────────────────────────────────────────
+function speak(text) {
+  stopSpeech();
+  const clean = text.replace(/📝 TIP:.*$/s, '').replace(/[*_`]/g, '').trim();
+  const utter = new SpeechSynthesisUtterance(clean);
+  utter.lang = 'en-US';
+  utter.rate = 0.92;
+  utter.pitch = 1.0;
+
+  // Prefer a natural US English voice
+  const voices = speechSynthesis.getVoices();
+  const preferred = voices.find(v => v.name.includes('Aria') || v.name.includes('Guy') || v.name.includes('David') || (v.lang === 'en-US' && v.localService));
+  if (preferred) utter.voice = preferred;
+
+  utter.onstart = () => setStatus('Jake is speaking...');
+  utter.onend   = () => setStatus('Tap the mic to speak');
+  speechSynthesis.speak(utter);
+}
+
+function stopSpeech() { speechSynthesis.cancel(); }
+
+// Voices may load async
+speechSynthesis.onvoiceschanged = () => {};
+
+// ──────────────────────────────────────────────
+//  CONTROLS
+// ──────────────────────────────────────────────
+document.getElementById('btn-repeat').addEventListener('click', () => {
+  if (lastBotText) speak(lastBotText);
+});
+
+document.getElementById('btn-hint').addEventListener('click', () => {
+  sendToGroq("Could you give me a hint or suggest what I could say next?");
+});
+
+function setStatus(msg) {
+  document.getElementById('status-text').textContent = msg;
+}
+</script>
+</body>
+</html>
